@@ -1,10 +1,10 @@
 # Simplicity
 
-Simplicity gives you tools to write more concise ActionController and helper methods.
+Simplicity gives you some handy tools and language extensions to write more concise controller and helper methods.
 
 ## Dependencies
 
-Requires Ruby 1.9.x
+Requires Ruby 1.9 and Rails 3.0
 
 ## Installation
 
