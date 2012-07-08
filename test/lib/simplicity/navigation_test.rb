@@ -27,5 +27,11 @@ describe Simplicity::Navigation do
     subject.view_context.meta_description = 'Page Description from View'
     assert_equal subject.view_context.meta_description, 'Page Description from View'
   end
- 
+
+  it "should allow writing a page_title to read when rendering" do
+    subject.view_context.page_title('Page Title')
+    # subject.view_context.render(:text => "")
+    # assert_equal subject.view_context.render_page_title, 'Page Title'
+  end
+
 end

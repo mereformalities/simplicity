@@ -12,6 +12,7 @@ module Simplicity
       base.send :attr_accessor, :meta_keywords
       # Module methods
       base.send :include, InstanceMethods
+      base.send :helper, HelperMethods
       base.send :extend, ClassMethods
       # Class instance variables
       base.send :class_attribute, :body_class_rules
@@ -84,6 +85,22 @@ module Simplicity
     end
   
   
+    module HelperMethods
+      
+      def page_title(page_title)
+        content_for(:title) { page_title }
+      end
+
+      def page_title=(page_title)
+        page_title(page_title)
+      end
+
+      def render_page_title
+        content_for(:title).present? ? content_for(:title) : controller_name.humanize
+      end
+    end
+    
+    
     module InstanceMethods
     
       # unique per action page_id
