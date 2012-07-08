@@ -5,9 +5,15 @@ module Simplicity
     # class PermissionDenied < Error; end
 
     def self.included(base)
+      # Add modules
       base.send :include, InstanceMethods
       base.send :extend, ClassMethods
+      # Class instance variables
       base.send :class_attribute, :body_class_rules
+      base.send :class_attribute, :body_class_default
+      base.send :class_attribute, :meta_title_default
+      base.send :class_attribute, :meta_description_default
+      # Helper methods
       base.send :helper_method, :page_id
       base.send :helper_method, :meta_title
       base.send :helper_method, :meta_description
@@ -15,8 +21,8 @@ module Simplicity
       base.send :helper_method, :body_class
       base.send :helper_method, :nav_class
       base.send :helper_method, :subnav_class
-
-      base.class_eval do
+      # Shortcuts
+      base.class_eval do        
         def self.body_class(name, options = {})
           self.add_body_class_rule(:body, name, options)
         end 
@@ -36,13 +42,11 @@ module Simplicity
       # Higher priority statements should be written last
       #
       # Valid options
-      #  * :only, :for - Only give the class for the given actions
-      #  * :except, :for_all_except - Set class for everything but 
+      #   :only, :for - Only give the class for the given actions
+      #   :except, :for_all_except - Set class for everything but 
       #
       def add_body_class_rule(type, name, options = {})
-        options.assert_valid_keys(:only, 
-          :for, :for_all_except, :except
-        )
+        options.assert_valid_keys( :only, :for, :for_all_except, :except ) 
         options[:only] ||= options[:for] if options[:for]
         options[:except] ||= options[:for_all_except] if options[:for_all_except]
     
@@ -54,22 +58,22 @@ module Simplicity
           end 
         end      
       
-        self.body_class_rules||=[]
-        self.body_class_rules << {:type => type, :name => name, :options => options }
+        self.body_class_rules ||= []
+        self.body_class_rules << { :type => type, :name => name, :options => options }
       
         # Run before filter whenever body_class
         # is used, but only declare filter once
-        unless (@body_class_filter_declared||=false)
-          @body_class_filter_declared=true
+        unless (@body_class_filter_declared ||= false)
+          @body_class_filter_declared = true
           before_filter :resolve_body_class
         end
       end
       
       # Pass in custom defaults
       def set_meta_defaults(defaults = {})
-        @@meta_title_default = defaults[:title]
-        @@meta_description_default = defaults[:description]
-        @@class_name_default = defaults[:class_name] || "default"
+        self.meta_title_default = defaults[:title]
+        self.meta_description_default = defaults[:description]
+        self.body_class_default = defaults[:body_class] || 'default'
       end
     end
   
@@ -81,11 +85,11 @@ module Simplicity
       def resolve_body_class
         self.body_class_rules.each do |rule| 
           type    = rule[:type]
-          name    = rule[:name]
+          name    = rule[:name] || self.body_class_default
           options = rule[:options]
         
           if options.has_key?(:only)
-            cond = options[:only].include?( (params[:action]||"index").to_sym ) 
+            cond = options[:only].include?( (params[:action] || 'index').to_sym ) 
             case type
               when :body    then @body_class = name if cond
               when :nav     then @nav_class = name if cond
@@ -94,7 +98,7 @@ module Simplicity
           end
       
           if options.has_key?(:except)
-            cond = options[:except].include?( (params[:action]||"index").to_sym ) 
+            cond = options[:except].include?( (params[:action] || 'index').to_sym ) 
             case type
               when :body    then @body_class = name unless cond
               when :nav     then @nav_class = name unless cond
@@ -105,9 +109,9 @@ module Simplicity
           # Without options, name is universally applied
           if options.nil? or options.empty? 
             case type
-              when :body    then @body_class = name || "default"
-              when :nav     then @nav_class = name || "default"
-              when :subnav  then @subnav_class = name || "default"
+              when :body    then @body_class = name
+              when :nav     then @nav_class = name
+              when :subnav  then @subnav_class = name
             end
           end
         end
@@ -130,7 +134,7 @@ module Simplicity
 
       # meta_title get method
       def meta_title
-        @meta_title || @@meta_title_default
+        @meta_title || self.meta_title_default
       end
     
       # meta_description set method
@@ -140,7 +144,7 @@ module Simplicity
 
       # meta_description get method
       def meta_description
-        @meta_description || @@meta_description_default
+        @meta_description || self.meta_description_default
       end
     
       # meta_keywords set method
@@ -155,17 +159,17 @@ module Simplicity
     
       # body class get method
       def body_class
-        @body_class || @@class_name_default
+        @body_class || self.body_class_default
       end  
     
       # nav class get method
       def nav_class
-        @nav_class || @@class_name_default
+        @nav_class || self.body_class_default
       end   
     
       # subnav class get method
       def subnav_class
-        @subnav_class || @@class_name_default
+        @subnav_class || self.body_class_default
       end
     
       # make multiple layouts work intuitively
