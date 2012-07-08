@@ -5,21 +5,27 @@ module Simplicity
     # class PermissionDenied < Error; end
 
     def self.included(base)
-      # Add modules
+      # Accessors
+      base.send :attr_writer, :page_uid
+      base.send :attr_writer, :meta_title
+      base.send :attr_writer, :meta_description
+      base.send :attr_accessor, :meta_keywords
+      # Module methods
       base.send :include, InstanceMethods
       base.send :extend, ClassMethods
       # Class instance variables
       base.send :class_attribute, :body_class_rules
-      base.send :class_attribute, :body_class_default
-      base.send :class_attribute, :meta_title_default
-      base.send :class_attribute, :meta_description_default
+      base.send :class_attribute, :body_class_default, :instance_writer => false
+      base.send :class_attribute, :meta_title_default, :instance_writer => false
+      base.send :class_attribute, :meta_description_default, :instance_writer => false
+      # Helper attributes
+      base.send :helper_attr, :page_uid
+      base.send :helper_attr, :meta_title
+      base.send :helper_attr, :meta_description
+      base.send :helper_attr, :meta_keywords
       # Helper methods
-      base.send :helper_method, :page_id
-      base.send :helper_method, :meta_title
-      base.send :helper_method, :meta_description
-      base.send :helper_method, :meta_keywords
-      base.send :helper_method, :body_class
       base.send :helper_method, :nav_class
+      base.send :helper_method, :body_class
       base.send :helper_method, :subnav_class
       # Shortcuts
       base.class_eval do        
@@ -70,7 +76,7 @@ module Simplicity
       end
       
       # Pass in custom defaults
-      def set_meta_defaults(defaults = {})
+      def meta_defaults(defaults = {})
         self.meta_title_default = defaults[:title]
         self.meta_description_default = defaults[:description]
         self.body_class_default = defaults[:body_class] || 'default'
@@ -79,6 +85,33 @@ module Simplicity
   
   
     module InstanceMethods
+    
+      # unique per action page_id
+      def page_uid
+        @page_id || params[:controller] + '_' + params[:action]
+      end
+      
+      # http://guides.rubyonrails.org/active_support_core_extensions.html
+      # Consider: attr_accessor_with_default :primary_key, 'id'
+      def meta_title
+        @meta_title || self.meta_title_default
+      end
+
+      def meta_description
+        @meta_description || self.meta_description_default
+      end
+
+      def body_class
+        @body_class || self.body_class_default
+      end  
+
+      def nav_class
+        @nav_class || self.body_class_default
+      end   
+
+      def subnav_class
+        @subnav_class || self.body_class_default
+      end
     
       protected
     
@@ -115,61 +148,6 @@ module Simplicity
             end
           end
         end
-      end
-    
-      # unique id for every action
-      def set_page_id(id)
-        @page_id = id
-      end
-    
-      # page_id get method
-      def page_id
-        @page_id || params[:controller] + '_' + params[:action]
-      end
-    
-      # meta_title set method
-      def set_meta_title(title)
-        @meta_title = title
-      end
-
-      # meta_title get method
-      def meta_title
-        @meta_title || self.meta_title_default
-      end
-    
-      # meta_description set method
-      def set_meta_description(desc)
-        @meta_description = desc
-      end
-
-      # meta_description get method
-      def meta_description
-        @meta_description || self.meta_description_default
-      end
-    
-      # meta_keywords set method
-      def set_meta_keywords(keywords)
-        @meta_keywords = keywords
-      end
-    
-      # meta_keywords get method
-      def meta_keywords
-        @meta_keywords
-      end
-    
-      # body class get method
-      def body_class
-        @body_class || self.body_class_default
-      end  
-    
-      # nav class get method
-      def nav_class
-        @nav_class || self.body_class_default
-      end   
-    
-      # subnav class get method
-      def subnav_class
-        @subnav_class || self.body_class_default
       end
     
       # make multiple layouts work intuitively
